@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 
@@ -29,6 +29,7 @@ function NavBar({ activeSection, setActiveSection }) {
 // SlideShow Component
 function SlideShow() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const pressImages = [
     '/press/bb_press0.png',
     '/press/bb_press1.jpg',
@@ -36,31 +37,38 @@ function SlideShow() {
     '/press/bb_press3.png'
   ];
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % pressImages.length);
-  };
+  // Preload all images
+  useEffect(() => {
+    pressImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + pressImages.length) % pressImages.length);
-  };
+  // Auto-rotation effect
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % pressImages.length);
+    }, 4000); // Change slide every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [isPaused, pressImages.length]);
 
   return (
     <div className={styles.slideshow}>
-      <div className={styles.slideContainer}>
-        <img
-          src={pressImages[currentSlide]}
-          alt={`Bog Band Press ${currentSlide + 1}`}
-          className={styles.slideImage}
-        />
-        <button className={styles.slideButton} onClick={prevSlide}>‹</button>
-        <button className={styles.slideButton} onClick={nextSlide}>›</button>
-      </div>
-      <div className={styles.slideIndicators}>
-        {pressImages.map((_, index) => (
-          <button
-            key={index}
-            className={`${styles.indicator} ${index === currentSlide ? styles.active : ''}`}
-            onClick={() => setCurrentSlide(index)}
+      <div
+        className={styles.slideContainer}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {pressImages.map((src, index) => (
+          <img
+            key={src}
+            src={src}
+            alt={`Bog Band Press ${index + 1}`}
+            className={`${styles.slideImage} ${index === currentSlide ? styles.active : ''}`}
           />
         ))}
       </div>
